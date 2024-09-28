@@ -37,13 +37,27 @@ public class Circle
             _colour = Color.Green;
         }
 
-        if (Position.Y - Radius <= 0 || Position.Y + Radius >= Raylib.GetScreenHeight())
+        if (Position.Y - Radius <= 0)
         {
+            Position.Y = Radius;
             Direction.Y *= -1;
         }
 
-        if (Position.X - Radius <= 0 || Position.X + Radius >= Raylib.GetScreenWidth())
-        { 
+        if (Position.Y + Radius >= Raylib.GetScreenHeight())
+        {
+            Position.Y = Raylib.GetScreenHeight() - Radius;
+            Direction.Y *= -1;
+        }
+
+        if (Position.X - Radius <= 0)
+        {
+            Position.X = Radius;
+            Direction.X *= -1;
+        }
+
+        if (Position.X + Radius >= Raylib.GetScreenWidth())
+        {
+            Position.X = Raylib.GetRenderWidth() - Radius;
             Direction.X *= -1;
         }
 
