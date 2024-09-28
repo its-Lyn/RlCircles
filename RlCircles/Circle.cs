@@ -9,8 +9,6 @@ public class Circle
     public readonly float Speed = 0.85f;
 
     public Vector2 Position;
-    public Vector2 Velocity;
-
     public Vector2 Direction;
 
     public float Radius;
@@ -50,8 +48,6 @@ public class Circle
         }
 
         Position += Direction * Speed;
-
-        Position += Velocity;
     }
 
     public void Draw()

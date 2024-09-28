@@ -8,6 +8,54 @@ public static class RlCircles
     public static readonly float MouseRadius = 6;
     private readonly static List<Circle> _circles = [];
 
+    private static bool _stopSpawning = false;
+
+    private static int _loadedCircles;
+    private static int _circleCount = 15;
+
+    private static void ParseArguments(string[] args)
+    {
+        if (args.Length <= 0) return;
+
+        bool countFlag = false;
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (countFlag)
+            {
+                countFlag = false;
+                continue;
+            }
+
+            switch (args[i])
+            {
+                case "--count":
+                case "-c":
+                    if (args.Length - 1 < i + 1)
+                    {
+                        Console.Error.WriteLine("WARN: PARSER: No integer provided! Using default value.");
+                        return;
+                    }
+
+                    string countString = args[i + 1].Trim();
+
+                    bool success = int.TryParse(countString, out int result);
+                    if (!success)
+                    {
+                        Console.Error.WriteLine("WARN: PARSER: Bad integer value provided! Using default value.");
+                        return;
+                    }
+
+                    _circleCount = result;
+                    countFlag = true;
+                break;
+
+                default:
+                    Console.Error.WriteLine($"WARN: PARSER: Unrecognised flag \"{args[i]}\".");
+                break;
+            }
+        }
+    }
+
     public static float DegreesToRadians(float degrees)
         => degrees * (MathF.PI / 180);
 
@@ -17,7 +65,7 @@ public static class RlCircles
         return Vector2.Normalize(point);
     }
 
-    public static void Main()
+    public static void Main(string[] args)
     {
         Raylib.InitWindow(1024, 576, "RlCircles");
         Raylib.SetTargetFPS(60);
@@ -26,16 +74,32 @@ public static class RlCircles
         // Because it looks good :troll:
         Raylib.HideCursor();
 
+        // Space to differenciate raylib debug logs
+        // V.S. my debug logs.
+        Console.WriteLine();
+
+        ParseArguments(args);
+        _loadedCircles = _circleCount;
+
         Stopwatch watch = new Stopwatch();
         watch.Start();
 
-        for (int i = 0; i < 15; i++)
+        for (int i = 0; i < _circleCount; i++)
         {
             Circle circle = new Circle();
             bool overlaps;
 
+            int iter = 0;
             do
             {
+                if (iter >= 15)
+                {
+                    Console.Error.WriteLine($"WARN: CIRCLES: Unable to load circles. No space left on the screen. {i} Circles spawned.");
+                    _stopSpawning = true;
+                    _loadedCircles = i;
+                    break;
+                }
+
                 overlaps = false;
                 circle.Position = new Vector2(
                     Random.Shared.Next((int)(circle.Radius + circle.SpawnOffset), (int)(Raylib.GetScreenWidth() - circle.SpawnOffset - circle.Radius)),
@@ -50,14 +114,17 @@ public static class RlCircles
                         break;
                     }
                 }
-
+                
+                iter++;
             } while (overlaps);
 
             _circles.Add(circle);
+
+            if (_stopSpawning) break;
         }
 
         watch.Stop();
-        Console.WriteLine($"INFO: CIRCLES: Loaded in {watch.Elapsed.TotalMicroseconds}μs");
+        Console.WriteLine($"INFO: CIRCLES: Loaded {_loadedCircles} circles in {watch.Elapsed.TotalMicroseconds}μs.");
 
         Stopwatch updateWatch = new Stopwatch();
         Stopwatch drawWatch = new Stopwatch();
